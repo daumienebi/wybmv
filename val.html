@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valentine's Surprise</title>
+    <style>
+
+        
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: url('https://images.unsplash.com/photo-1487035242901-d419a42d17af?q=80&w=1927&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D') no-repeat center center/cover;
+            text-align: center;
+            font-family: Arial, sans-serif;
+            color: white;
+            overflow: hidden;
+        }
+        .container {
+    position: relative;
+    background: rgba(0, 0, 0, 0.7); /* Dark overlay to improve readability */
+    padding: 20px;
+    border-radius: 10px;
+    background-image: url('olamide-rock-grungecake-thumbnail.webp'); /* Add the GIF */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+        .puzzle-container {
+            display: flex;
+            flex-direction: column;
+            gap: 5px; /* Espaciado entre imágenes */
+            margin-bottom: 20px;
+        }
+        .puzzle-piece {
+            width: 200px;
+            height: auto;
+            cursor: grab;
+            display: block;
+            border-radius: 5px;
+            border: 2px solid rgba(255, 255, 255, 0.3); /* Borde suave */
+        }
+        .button {
+            background: #e4356f;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: 0.3s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+        .button:hover {
+            background: #d6336c;
+        }
+        .heartbeat {
+            font-size: 2.5rem;
+            font-weight: bold;
+            opacity: 0;
+            animation: fadeIn 5s forwards, heartbeat 1.5s infinite ease-in-out;
+        }
+        #countdown {
+            font-size: 2rem;
+            margin-top: 40px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            font-weight: bold;
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: fit-content;
+        }
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+        @keyframes heartbeat {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <p class="message">Solve the puzzle to prove you're human. <p>If you're lucky, the puzzle might be solved when you load this page, and if not then goodluck solving it</p>
+        <div class="puzzle-container" id="puzzleContainer"></div>
+        <button class="button" onclick="checkPuzzle()">Submit puzzle</button>
+        <p class="heartbeat" id="valentineText" style="display: none;">Will you be my Valentine? 💖</p>
+        <audio id="backgroundMusic" loop>
+            <source src="https://cdn.trendybeatz.com/audio/Olamide-Rock-(TrendyBeatz.com).mp3" type="audio/mpeg">
+        </audio>
+        <button class="button" onclick="toggleMusic()">Play/Pause 🎵</button>
+    </div>
+
+    <!-- Contador de tiempo hasta el 14 de febrero de 2025 -->
+    <p id="countdown"></p>
+
+    <script>
+        let pieces = [];
+        let correctOrder = ["row-1-column-1.jpg", "row-2-column-1.jpg", "row-3-column-1.jpg", "row-4-column-1.jpg", "row-5-column-1.jpg"];
+
+        function createPuzzle() {
+            let container = document.getElementById("puzzleContainer");
+            let shuffledPieces = [...correctOrder].sort(() => Math.random() - 0.5); // Mezclar piezas aleatoriamente
+            
+            shuffledPieces.forEach((src, index) => {
+                let img = document.createElement("img");
+                img.src = src;
+                img.className = "puzzle-piece";
+                img.dataset.index = index; // Guardar índice actual
+                img.draggable = true;
+                img.ondragstart = dragStart;
+                img.ondragover = dragOver;
+                img.ondrop = drop;
+                pieces.push(img);
+                container.appendChild(img);
+            });
+        }
+
+        function dragStart(event) {
+            event.dataTransfer.setData("index", event.target.dataset.index);
+        }
+
+        function dragOver(event) {
+            event.preventDefault();
+        }
+
+        function drop(event) {
+            event.preventDefault();
+            let draggedIndex = event.dataTransfer.getData("index");
+            let targetIndex = event.target.dataset.index;
+
+            if (draggedIndex !== targetIndex) {
+                // Intercambiar las imágenes en la pantalla
+                let tempSrc = pieces[draggedIndex].src;
+                pieces[draggedIndex].src = pieces[targetIndex].src;
+                pieces[targetIndex].src = tempSrc;
+
+                // Intercambiar los índices de las piezas
+                let tempDataIndex = pieces[draggedIndex].dataset.index;
+                pieces[draggedIndex].dataset.index = pieces[targetIndex].dataset.index;
+                pieces[targetIndex].dataset.index = tempDataIndex;
+            }
+        }
+
+        function checkPuzzle() {
+            let isCorrect = pieces.every((piece, i) => piece.src.includes(correctOrder[i]));
+            if (isCorrect) {
+                document.getElementById("valentineText").style.display = "block";
+            } else {
+                alert("Try again! The puzzle is not correct.");
+            }
+        }
+
+        function toggleMusic() {
+            let music = document.getElementById("backgroundMusic");
+            if (music.paused) {
+                music.play();
+            } else {
+                music.pause();
+            }
+        }
+
+        function updateCountdown() {
+            let now = new Date();
+            let targetDate = new Date("February 14, 2025 00:00:00");
+            let diff = targetDate - now;
+
+            let days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            let hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            let minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            let seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            document.getElementById("countdown").innerHTML = `${hours}h ${minutes}m ${seconds}s</strong> 💖`;
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            createPuzzle();
+            updateCountdown();
+            setInterval(updateCountdown, 1000); // Actualizar cada segundo
+        });
+    </script>
+</body>
+</html>
